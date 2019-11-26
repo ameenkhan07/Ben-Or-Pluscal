@@ -5,9 +5,7 @@ EXTENDS Integers, Sequences, FiniteSets
 CONSTANT N, F, MAXROUND, INPUT
 ASSUME N \in Nat /\ F < N
 Procs == 1..N
-\*Failure == 0..F
-\* INPUT = {i \in 0..1 |-> i}
-\* Rounds == 1..MAXROUND
+Rounds == 1..MAXROUND
 (*
 --algorithm BenOr
 {
@@ -59,7 +57,7 @@ Procs == 1..N
         \* wait until p2v msgs is greater/equal to N-F
         await (Cardinality(SentPhase2Msgs(n,r)) >= (N-F));
 
-    	\* if received more than n/2 messages(p2v), 
+    	\* if received more than n/2 messages(p2v),
     	\* then set "v" value to that otherwise set it to -1
     	if (Cardinality(SentPhase2ValMsgs(n,r,0)) >= (F + 1)){
             v := 0;
@@ -85,7 +83,7 @@ Procs == 1..N
 
     \* \* Node process
     fair process (p \in Procs)
-    variable node_id=self, r=0, p1v = INPUT[self], p2v = -1, decided = -1, v = 0;
+    variable node_id=self, r=0, p1v = INPUT[self], p2v = -1, decided = -1, v = -1;
     {
         R: while (r < MAXROUND) {
             r:=r+1;
@@ -101,9 +99,6 @@ Procs == 1..N
             \*\* Decide
             P2N: if (v \in {0,1}){
 					decided := v;
-			}
-			else{
-				decided := -1;
 			};
 
 			\* Proceed, Set Next rounds broadcasting values
@@ -137,7 +132,7 @@ Init == (* Global variables *)
         /\ p1v = [self \in Procs |-> INPUT[self]]
         /\ p2v = [self \in Procs |-> -1]
         /\ decided = [self \in Procs |-> -1]
-        /\ v = [self \in Procs |-> 0]
+        /\ v = [self \in Procs |-> -1]
         /\ pc = [self \in ProcSet |-> "R"]
 
 R(self) == /\ pc[self] = "R"
@@ -182,7 +177,8 @@ CP2(self) == /\ pc[self] = "CP2"
 P2N(self) == /\ pc[self] = "P2N"
              /\ IF v[self] \in {0,1}
                    THEN /\ decided' = [decided EXCEPT ![self] = v[self]]
-                   ELSE /\ decided' = [decided EXCEPT ![self] = -1]
+                   ELSE /\ TRUE
+                        /\ UNCHANGED decided
              /\ IF SentPhase2ValMsgs(node_id[self],r[self],1) # {}
                    THEN /\ p1v' = [p1v EXCEPT ![self] = 1]
                    ELSE /\ IF SentPhase2ValMsgs(node_id[self],r[self],0) # {}
@@ -208,5 +204,18 @@ Spec == /\ Init /\ [][Next]_vars
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 \* END TRANSLATION
+---------------------------------------------------------
+Agreement == (\A j,k \in Procs: decided[j] # -1 /\ decided[k] # -1 => decided[j]=decided[k])
+
+v0 == \A d \in Procs: decided[d] = 0
+v1 == \A d \in Procs: decided[d] = 1
+v3 == \A d \in Procs: decided[d] # -1
+Progress == \A d \in Procs:
+            \A ro \in Rounds:
+            Cardinality(SentPhase2ValMsgs(d,ro,0)) = N \/
+            Cardinality(SentPhase2ValMsgs(d,ro,1)) = N
+            \* => v0 \/ v1
+            => v3
+
 
 =============================================================================
