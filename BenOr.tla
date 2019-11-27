@@ -217,5 +217,30 @@ Progress == \A d \in Procs:
             \* => v0 \/ v1
             => v3
 
+m0 == Cardinality({i \in Procs: (INPUT[i]=0)})
+m1 == Cardinality({i \in Procs: (INPUT[i]=1)})
+MinorityReport0 == \A p1 \in Procs: m1 > m0 => decided[p1] # 0
+MinorityReport1 == \A p1 \in Procs: m1 < m0 => decided[p1] # 1
+MinorityReport == MinorityReport0 /\ MinorityReport1
+
+
+=============================================================================
+\* Ben Or algorithm
+
+\*  1. Agreement Property
+\* Agreement should never be violated. Even when F is more than majority of processes, 
+\* Agreement should still hold. Agreement should always be satisfied, 
+\* even when F is more than N/2. Test with N<5 and F < 5, with different values.
+
+\* 2. Progress Report
+
+\* 3. BaitProgress
+
+\* 4. Minority Report
+\* If N=4 and INPUT=«0,1,1,1», is it possible to have 0 decided for a run?
+\* Write a safety property called MinorityReport which claims that it
+\* is not possible for all the nodes to finalize with "0" as the consensus
+\* value. The model checker will try to prove you wrong by producing a
+\* counterexample when possible. Check this with F=0, F=1, and F=2.
 
 =============================================================================
