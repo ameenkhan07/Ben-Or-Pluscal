@@ -111,11 +111,11 @@ Rounds == 1..MAXROUND
 VARIABLES p1Msg, p2Msg, pc
 
 (* define statement *)
-SentPhase1Msgs(n,r) == {m \in p1Msg: (m.node_id # n) /\ (m.round=r)}
-SentPhase1ValMsgs(n,r,b) == {m \in p1Msg: (m.node_id # n) /\ (m.round=r) /\ (m.val=b)}
+SentPhase1Msgs(r) == {m \in p1Msg: (m.round=r)}
+SentPhase1ValMsgs(r,b) == {m \in p1Msg: (m.round=r) /\ (m.val=b)}
 
-SentPhase2Msgs(n,r) == {m \in p2Msg: (m.node_id # n) /\ (m.round=r)}
-SentPhase2ValMsgs(n,r,b) == {m \in p2Msg: (m.node_id # n) /\ (m.round=r) /\ (m.val=b)}
+SentPhase2Msgs(r) == {m \in p2Msg: (m.round=r)}
+SentPhase2ValMsgs(r,b) == {m \in p2Msg: (m.round=r) /\ (m.val=b)}
 
 VARIABLES node_id, r, p1v, p2v, decided, v
 
@@ -149,10 +149,10 @@ P1(self) == /\ pc[self] = "P1"
             /\ UNCHANGED << p2Msg, node_id, r, p1v, p2v, decided, v >>
 
 CP1(self) == /\ pc[self] = "CP1"
-             /\ (Cardinality(SentPhase1Msgs(node_id[self],r[self])) >= (N-F))
-             /\ IF Cardinality(SentPhase1ValMsgs(node_id[self],r[self],0))*2 > (N)
+             /\ (Cardinality(SentPhase1Msgs(r[self])) >= (N-F))
+             /\ IF Cardinality(SentPhase1ValMsgs(r[self],0))*2 > (N)
                    THEN /\ p2v' = [p2v EXCEPT ![self] = 0]
-                   ELSE /\ IF Cardinality(SentPhase1ValMsgs(node_id[self],r[self],1))*2 > (N)
+                   ELSE /\ IF Cardinality(SentPhase1ValMsgs(r[self],1))*2 > (N)
                               THEN /\ p2v' = [p2v EXCEPT ![self] = 1]
                               ELSE /\ p2v' = [p2v EXCEPT ![self] = -1]
              /\ pc' = [pc EXCEPT ![self] = "P2"]
@@ -164,10 +164,10 @@ P2(self) == /\ pc[self] = "P2"
             /\ UNCHANGED << p1Msg, node_id, r, p1v, p2v, decided, v >>
 
 CP2(self) == /\ pc[self] = "CP2"
-             /\ (Cardinality(SentPhase2Msgs(node_id[self],r[self])) >= (N-F))
-             /\ IF Cardinality(SentPhase2ValMsgs(node_id[self],r[self],0)) >= (F + 1)
+             /\ (Cardinality(SentPhase2Msgs(r[self])) >= (N-F))
+             /\ IF Cardinality(SentPhase2ValMsgs(r[self],0)) >= (F + 1)
                    THEN /\ v' = [v EXCEPT ![self] = 0]
-                   ELSE /\ IF Cardinality(SentPhase2ValMsgs(node_id[self],r[self],1)) >= (F + 1)
+                   ELSE /\ IF Cardinality(SentPhase2ValMsgs(r[self],1)) >= (F + 1)
                               THEN /\ v' = [v EXCEPT ![self] = 1]
                               ELSE /\ TRUE
                                    /\ v' = v
@@ -179,9 +179,9 @@ P2N(self) == /\ pc[self] = "P2N"
                    THEN /\ decided' = [decided EXCEPT ![self] = v[self]]
                    ELSE /\ TRUE
                         /\ UNCHANGED decided
-             /\ IF SentPhase2ValMsgs(node_id[self],r[self],1) # {}
+             /\ IF SentPhase2ValMsgs(r[self],1) # {}
                    THEN /\ p1v' = [p1v EXCEPT ![self] = 1]
-                   ELSE /\ IF SentPhase2ValMsgs(node_id[self],r[self],0) # {}
+                   ELSE /\ IF SentPhase2ValMsgs(r[self],0) # {}
                               THEN /\ p1v' = [p1v EXCEPT ![self] = 0]
                               ELSE /\ \E y \in {0,1}:
                                         p1v' = [p1v EXCEPT ![self] = y]
