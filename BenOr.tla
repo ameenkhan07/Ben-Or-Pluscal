@@ -12,11 +12,11 @@ Rounds == 1..MAXROUND
     variable p1Msg = {}, p2Msg = {}; \* Message Boards for phase1 and phase2
     define
     {
-        SentPhase1Msgs(n,r) == {m \in p1Msg: (m.node_id # n) /\ (m.round=r)}
-        SentPhase1ValMsgs(n,r,b) == {m \in p1Msg: (m.node_id # n) /\ (m.round=r) /\ (m.val=b)}
+        SentPhase1Msgs(r) == {m \in p1Msg: (m.round=r)}
+        SentPhase1ValMsgs(r,b) == {m \in p1Msg: (m.round=r) /\ (m.val=b)}
 
-        SentPhase2Msgs(n,r) == {m \in p2Msg: (m.node_id # n) /\ (m.round=r)}
-        SentPhase2ValMsgs(n,r,b) == {m \in p2Msg: (m.node_id # n) /\ (m.round=r) /\ (m.val=b)}
+        SentPhase2Msgs(r) == {m \in p2Msg: (m.round=r)}
+        SentPhase2ValMsgs(r,b) == {m \in p2Msg: (m.round=r) /\ (m.val=b)}
     }
 
     \* \* Node calls this to send p1v msg to other nodes
@@ -29,14 +29,14 @@ Rounds == 1..MAXROUND
     macro CollectP1 (n,r)
     {
         \* wait until p1v msgs is greater/equal than N-F
-        await (Cardinality(SentPhase1Msgs(n,r)) >= (N-F));
+        await (Cardinality(SentPhase1Msgs(r)) >= (N-F));
 
     	\* if received more than n/2 messages(p1v),
     	\* then set next phase's value to that otherwise set it to -1
-		if(Cardinality(SentPhase1ValMsgs(n,r,0))*2 > (N)){
+		if(Cardinality(SentPhase1ValMsgs(r,0))*2 > (N)){
             p2v := 0;
         }
-        else if (Cardinality(SentPhase1ValMsgs(n,r,1))*2 > (N)){
+        else if (Cardinality(SentPhase1ValMsgs(r,1))*2 > (N)){
             p2v := 1;
         }
         else{
@@ -55,24 +55,24 @@ Rounds == 1..MAXROUND
     macro CollectP2 (n,r)
     {
         \* wait until p2v msgs is greater/equal to N-F
-        await (Cardinality(SentPhase2Msgs(n,r)) >= (N-F));
+        await (Cardinality(SentPhase2Msgs(r)) >= (N-F));
 
     	\* if received more than n/2 messages(p2v),
     	\* then set "v" value to that otherwise set it to -1
-    	if (Cardinality(SentPhase2ValMsgs(n,r,0)) >= (F + 1)){
+    	if (Cardinality(SentPhase2ValMsgs(r,0)) >= (F + 1)){
             v := 0;
         }
-        else if(Cardinality(SentPhase2ValMsgs(n,r,1)) >= (F + 1)){
+        else if(Cardinality(SentPhase2ValMsgs(r,1)) >= (F + 1)){
             v := 1;
         };
     }
 
     macro NextRound(n,r)
     {
-        if (SentPhase2ValMsgs(n,r,1) # {}){
+        if (SentPhase2ValMsgs(r,1) # {}){
             p1v := 1;
         }
-        else if(SentPhase2ValMsgs(n,r,0) # {}){
+        else if(SentPhase2ValMsgs(r,0) # {}){
             p1v := 0;
         }
         else{
