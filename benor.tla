@@ -1,4 +1,4 @@
-------------------------------- MODULE BenOr -------------------------------
+------------------------------- MODULE benor -------------------------------
 (*\* Ben-Or algorithm *)
 EXTENDS Integers, Sequences, FiniteSets
 \* N nodes; F possible failure; MAXROUND iteration of rounds
@@ -6,7 +6,7 @@ CONSTANT N, F, INPUT, MAXROUND
 ASSUME N \in Nat /\ F < N
 Procs == 1..N
 (*
---algorithm BenOr
+--algorithm benor
 {
     variable p1Msg = {}, p2Msg = {}; \* Message Boards for phase1 and phase2
     define
