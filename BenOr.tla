@@ -2,10 +2,9 @@
 (*\* Ben-Or algorithm *)
 EXTENDS Integers, Sequences, FiniteSets
 \* N nodes; F possible failure; MAXROUND iteration of rounds
-CONSTANT N, F, MAXROUND, INPUT
+CONSTANT N, F, INPUT, MAXROUND
 ASSUME N \in Nat /\ F < N
 Procs == 1..N
-Rounds == 1..MAXROUND
 (*
 --algorithm BenOr
 {
@@ -204,43 +203,73 @@ Spec == /\ Init /\ [][Next]_vars
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 \* END TRANSLATION
----------------------------------------------------------
+-------------------------------------------------------------------------------
+\*AGREEMENT
 Agreement == (\A j,k \in Procs: decided[j] # -1 /\ decided[k] # -1 => decided[j]=decided[k])
 
-v0 == \A d \in Procs: decided[d] = 0
-v1 == \A d \in Procs: decided[d] = 1
-v3 == \A d \in Procs: decided[d] # -1
-Progress == \A d \in Procs:
-            \A ro \in Rounds:
-            Cardinality(SentPhase2ValMsgs(d,ro,0)) = N \/
-            Cardinality(SentPhase2ValMsgs(d,ro,1)) = N
-            \* => v0 \/ v1
-            => v3
+\*PROGRESS
+Progress == <>(\A d \in Procs: decided[d] # -1)
 
-m0 == Cardinality({i \in Procs: (INPUT[i]=0)})
-m1 == Cardinality({i \in Procs: (INPUT[i]=1)})
-MinorityReport0 == \A p1 \in Procs: m1 > m0 => decided[p1] # 0
-MinorityReport1 == \A p1 \in Procs: m1 < m0 => decided[p1] # 1
-MinorityReport == MinorityReport0 /\ MinorityReport1
+\*BAIT PROGRESS
+
+\* BaitProgress == (\A d \in Procs: decided[d] = -1)
+
+\* Util Variables: Count number of 0s and 1s in INPUT
+m0 == (Cardinality({i \in Procs: (INPUT[i]=0)}))
+m1 == (Cardinality({i \in Procs: (INPUT[i]=1)}))
+
+\*MINORITY REPORT
+MinorityReport0 == (\A p1 \in Procs: m1 > m0 => decided[p1] # 0)
+MinorityReport1 == (\A p1 \in Procs: m1 < m0 => decided[p1] # 1)
+MinorityReport == (MinorityReport0 /\ MinorityReport1)
 
 
-=============================================================================
-\* Ben Or algorithm
+\* ============================================================================
+\* Submitted by:
+\* Ameen M Khan (UBID: ameenmoh)
+\* Sameer Singh Rathor (UBID: srathor)
+\* Ben-Or Algorithm
 
-\*  1. Agreement Property
-\* Agreement should never be violated. Even when F is more than majority of processes, 
-\* Agreement should still hold. Agreement should always be satisfied, 
-\* even when F is more than N/2. Test with N<5 and F < 5, with different values.
+\*  1. Agreement property
+\* Agreement, as defined, is a property which should never be violated.
+\* It should still hold even when F (failure nodes) is greater than majority of
+\* processes (majority for our case is N/2, N is total number of processes).
+\* As suggested, we tested our agreement  property with N<5 and F < 5,
+\* with different values.
+\* Our property to capture Agreement is that if two process "decide" a value
+\* other than -1, they should be equal.
 
-\* 2. Progress Report
+\* 2. Progress property
+\* Progress property is a liveness property, which says good things do happen
+\* and in PlusCal, they are usually defined using temporal (non deterministic)
+\* operators. In BenOr, "progress" means if we start with all same preference values
+\* (INPUT=«1,1,1,1» or «0,0,0,0» ), algorithm should terminate such that, every
+\* process should eventually  have "decided" not -1.
+\* This is exactly what we have modeled using eventual (<>) operator. <>P means
+\* that for every possible behavior, at least one state has P as true.
+
 
 \* 3. BaitProgress
+\* BaitProgress is basically an invariant that says 'consensus can never be reached' 
+\* and the model checker would try to find some computations where all processes 
+\* will have "decided" value -1, and will consequently  provide examples of 
+\* consensus being reached in the traceback. So the safety property here is
+\* "baiting" the model checker into showing you that progress can be made and
+\* gives scenarios of just that happening
 
 \* 4. Minority Report
-\* If N=4 and INPUT=«0,1,1,1», is it possible to have 0 decided for a run?
-\* Write a safety property called MinorityReport which claims that it
-\* is not possible for all the nodes to finalize with "0" as the consensus
-\* value. The model checker will try to prove you wrong by producing a
-\* counterexample when possible. Check this with F=0, F=1, and F=2.
+\*  MinorityReport is a safety property which claims that it is not possible
+\* for all the nodes to finalize with "0" as the consensus value if "0" is a 
+\* minority in the INPUT (like «0,1,1,1)».
+\* We wrote a property which the model checker will try to prove  wrong 
+\* by producing a counterexample. 
+\* Tested with F=0, F=1, and F=2 for N = 4.
 
+
+\* NOTE
+\* - In our code and subsequent observations, we have used "nodes"/"processes" 
+\*   interchangeably.
+\* - For observing model checker for above properties, we restrict our
+\*   MAXROUND to 4. For a high F and N value, we reduce MAXROUND to
+\*   lower values because execution time started going beyond 30 minutes
 =============================================================================
